@@ -234,9 +234,6 @@
               <th>Tipo</th>
               <th>Estado</th>
               <th>Descripción</th>
-              <th>Pantalla</th>
-              <th>Fecha</th>
-              <th>Reportado por</th>
               <th></th>
             </tr>
           </thead>
@@ -257,12 +254,9 @@
                   <td><span class="fb-source-chip" :class="'fb-source-chip--'+r.source" x-text="r.source"></span></td>
                   <td><span class="fb-type-chip" :class="'fb-type-chip--'+r.type" x-text="r.type==='bug'?'Problema':'Mejora'"></span></td>
                   <td><span class="fb-status-chip" :class="'fb-status-chip--'+r.status" x-text="r.status==='open'?'Abierto':'Resuelto'"></span></td>
-                  <td style="max-width:22rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                  <td style="max-width:32rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
                     <span x-text="summary(r)"></span>
                   </td>
-                  <td style="font-size:.8rem;color:var(--ink-2)" x-text="r.screen ?? '—'"></td>
-                  <td style="white-space:nowrap;font-size:.8rem" x-text="fmtDate(r.created_at)"></td>
-                  <td style="font-size:.8rem;color:var(--ink-2)" x-text="r.reported_by ?? '—'"></td>
                   <td>
                     <button
                       x-show="r.status==='open'"
@@ -277,8 +271,22 @@
                 <!-- expanded detail row -->
                 <template x-if="expanded===r.id">
                   <tr class="fb-row-expanded">
-                    <td colspan="9" style="padding:.75rem 1rem 1rem 2.5rem">
+                    <td colspan="6" style="padding:.75rem 1rem 1rem 2.5rem">
                       <div class="fb-detail-grid">
+
+                        <!-- meta fields -->
+                        <div class="fb-detail-row">
+                          <span class="fb-detail-label">Pantalla</span>
+                          <span class="fb-detail-value" x-text="r.screen ?? '—'"></span>
+                        </div>
+                        <div class="fb-detail-row">
+                          <span class="fb-detail-label">Fecha</span>
+                          <span class="fb-detail-value" x-text="fmtDate(r.created_at)"></span>
+                        </div>
+                        <div class="fb-detail-row">
+                          <span class="fb-detail-label">Reportado por</span>
+                          <span class="fb-detail-value" x-text="r.reported_by ?? '—'"></span>
+                        </div>
 
                         <template x-if="r.type==='bug'">
                           <div>
@@ -342,7 +350,7 @@
             </template>
 
             <tr x-show="!loading && filtered.length === 0">
-              <td colspan="9" style="text-align:center;color:var(--ink-2);padding:2rem 0;font-size:.875rem">
+              <td colspan="6" style="text-align:center;color:var(--ink-2);padding:2rem 0;font-size:.875rem">
                 No hay reportes que coincidan con los filtros.
               </td>
             </tr>
