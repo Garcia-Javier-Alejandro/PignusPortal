@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feedback · Pignus Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://ui.pignuslabs.com.ar/pignus.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    .fb-source-chip {
+      display: inline-block;
+      font-size: .7rem;
+      font-weight: 600;
+      padding: .1rem .45rem;
+      border-radius: .3rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .fb-source-chip--inventario  { background: #dbeafe; color: #1e40af; }
+    .fb-source-chip--facturacion { background: #dcfce7; color: #166534; }
+    .fb-source-chip--inversiones { background: #fef9c3; color: #854d0e; }
+
+    .fb-status-chip {
+      display: inline-block;
+      font-size: .7rem;
+      font-weight: 600;
+      padding: .1rem .45rem;
+      border-radius: .3rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .fb-status-chip--open     { background: #fee2e2; color: var(--err); }
+    .fb-status-chip--resolved { background: #dcfce7; color: var(--ok); }
+
+    .fb-type-chip {
+      display: inline-block;
+      font-size: .7rem;
+      font-weight: 600;
+      padding: .1rem .45rem;
+      border-radius: .3rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      background: var(--border);
+      color: var(--ink-2);
+    }
+    .fb-type-chip--bug             { background: #fce7f3; color: #9d174d; }
+    .fb-type-chip--feature_request { background: #ede9fe; color: #5b21b6; }
+
+    .fb-detail-grid {
+      display: grid;
+      gap: .5rem;
+      margin-top: .75rem;
+    }
+    .fb-detail-row {
+      display: grid;
+      grid-template-columns: 9rem 1fr;
+      gap: .5rem;
+      font-size: .8125rem;
+    }
+    .fb-detail-label {
+      font-weight: 600;
+      color: var(--ink-2);
+      padding-top: .05rem;
+    }
+    .fb-detail-value {
+      color: var(--ink);
+      white-space: pre-wrap;
+    }
+
+    .fb-row-expanded td {
+      background: color-mix(in srgb, var(--card) 60%, var(--cream) 40%);
+    }
+
+    .fb-filter-bar {
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .fb-tab {
+      padding: .3rem .75rem;
+      border-radius: .4rem;
+      font-size: .8125rem;
+      font-weight: 600;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--ink-2);
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .1s, color .1s;
+    }
+    .fb-tab--active {
+      background: var(--ink);
+      color: #f5f0e8;
+      border-color: var(--ink);
+    }
+
+    .fb-search {
+      margin-left: auto;
+      padding: .3rem .625rem;
+      border: 1px solid var(--border);
+      border-radius: .4rem;
+      font-size: .8125rem;
+      font-family: inherit;
+      background: var(--card);
+      color: var(--ink);
+      width: 14rem;
+    }
+    .fb-search:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+    .fb-expand-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: .2rem;
+      color: var(--ink-2);
+      display: flex;
+      align-items: center;
+    }
+    .fb-expand-icon {
+      transition: transform .15s;
+    }
+    .fb-expand-icon--open {
+      transform: rotate(90deg);
+    }
+
+    .fb-resolve-btn {
+      padding: .25rem .7rem;
+      font-size: .75rem;
+      font-weight: 600;
+      font-family: inherit;
+      border: none;
+      border-radius: .375rem;
+      background: var(--ok);
+      color: #fff;
+      cursor: pointer;
+    }
+    .fb-resolve-btn:disabled {
+      opacity: .5;
+      cursor: default;
+    }
+  </style>
+</head>
+<body x-data="feedbackDash()" x-init="load()">
+
+  <header class="header">
+    <div class="header__brand">
+      <img src="PignusLabs_Logo.png" alt="Pignus Labs logo" class="header__logo">
+    </div>
+    <nav class="mod-nav">
+      <a href="index.html" class="mod-nav__item mod-nav__item--icon" aria-label="Portal" title="Portal">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:block" aria-hidden="true">
+          <path d="M3 11l9-8 9 8"/>
+          <path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>
+        </svg>
+      </a>
+      <a href="https://facturacion.pignuslabs.com.ar/" class="mod-nav__item">Facturación</a>
+      <a href="https://inventario.pignuslabs.com.ar/" class="mod-nav__item">Inventario</a>
+      <a href="https://inversiones.pignuslabs.com.ar/" class="mod-nav__item">Inversiones</a>
+      <a href="feedback.html" class="mod-nav__item mod-nav__item--active">Feedback</a>
+    </nav>
+    <div class="header__end"></div>
+  </header>
+
+  <main class="main">
+    <div class="app-shell">
+
+      <!-- KPI strip -->
+      <div class="kpi-strip" style="grid-template-columns:repeat(6,1fr);margin-bottom:1.5rem">
+        <div class="kpi-card">
+          <div class="kpi-card__label">Total</div>
+          <div class="kpi-card__value" x-text="reports.length"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card__label">Abiertos</div>
+          <div class="kpi-card__value" x-text="reports.filter(r=>r.status==='open').length"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card__label">Resueltos</div>
+          <div class="kpi-card__value" x-text="reports.filter(r=>r.status==='resolved').length"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card__label">Problemas</div>
+          <div class="kpi-card__value" x-text="reports.filter(r=>r.type==='bug').length"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card__label">Mejoras</div>
+          <div class="kpi-card__value" x-text="reports.filter(r=>r.type==='feature_request').length"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card__label">Esta semana</div>
+          <div class="kpi-card__value" x-text="thisWeek"></div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="fb-filter-bar">
+        <button class="fb-tab" :class="statusFilter==='all'&&'fb-tab--active'"    @click="statusFilter='all'">Todos</button>
+        <button class="fb-tab" :class="statusFilter==='open'&&'fb-tab--active'"   @click="statusFilter='open'">Abiertos</button>
+        <button class="fb-tab" :class="statusFilter==='resolved'&&'fb-tab--active'" @click="statusFilter='resolved'">Resueltos</button>
+
+        <span style="width:1px;height:1.25rem;background:var(--border);margin:0 .25rem"></span>
+
+        <button class="fb-tab" :class="typeFilter==='all'&&'fb-tab--active'"             @click="typeFilter='all'">Todos</button>
+        <button class="fb-tab" :class="typeFilter==='bug'&&'fb-tab--active'"             @click="typeFilter='bug'">Problemas</button>
+        <button class="fb-tab" :class="typeFilter==='feature_request'&&'fb-tab--active'" @click="typeFilter='feature_request'">Mejoras</button>
+
+        <span style="width:1px;height:1.25rem;background:var(--border);margin:0 .25rem"></span>
+
+        <button class="fb-tab" :class="sourceFilter==='all'&&'fb-tab--active'"          @click="sourceFilter='all'">Todas las apps</button>
+        <button class="fb-tab" :class="sourceFilter==='inventario'&&'fb-tab--active'"   @click="sourceFilter='inventario'">Inventario</button>
+        <button class="fb-tab" :class="sourceFilter==='facturacion'&&'fb-tab--active'"  @click="sourceFilter='facturacion'">Facturación</button>
+        <button class="fb-tab" :class="sourceFilter==='inversiones'&&'fb-tab--active'"  @click="sourceFilter='inversiones'">Inversiones</button>
+
+        <input class="fb-search" type="search" placeholder="Buscar…" x-model="search">
+      </div>
+
+      <!-- Loading / error states -->
+      <div x-show="loading" style="color:var(--ink-2);font-size:.875rem;padding:2rem 0">Cargando reportes…</div>
+      <div x-show="loadError" style="color:var(--err);font-size:.875rem;padding:2rem 0" x-text="loadError"></div>
+
+      <!-- Table -->
+      <div class="table-wrap" x-show="!loading && !loadError">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th style="width:1.5rem"></th>
+              <th>App</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th>Descripción</th>
+              <th>Pantalla</th>
+              <th>Fecha</th>
+              <th>Reportado por</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="r in filtered" :key="r.id">
+              <template x-if="true">
+                <!-- main row -->
+                <tr :class="expanded===r.id && 'fb-row-expanded'">
+                  <td>
+                    <button class="fb-expand-btn" @click="toggle(r.id)" :aria-expanded="expanded===r.id">
+                      <svg class="fb-expand-icon" :class="expanded===r.id&&'fb-expand-icon--open'"
+                        viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="9 18 15 12 9 6"/>
+                      </svg>
+                    </button>
+                  </td>
+                  <td><span class="fb-source-chip" :class="'fb-source-chip--'+r.source" x-text="r.source"></span></td>
+                  <td><span class="fb-type-chip" :class="'fb-type-chip--'+r.type" x-text="r.type==='bug'?'Problema':'Mejora'"></span></td>
+                  <td><span class="fb-status-chip" :class="'fb-status-chip--'+r.status" x-text="r.status==='open'?'Abierto':'Resuelto'"></span></td>
+                  <td style="max-width:22rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                    <span x-text="summary(r)"></span>
+                  </td>
+                  <td style="font-size:.8rem;color:var(--ink-2)" x-text="r.screen ?? '—'"></td>
+                  <td style="white-space:nowrap;font-size:.8rem" x-text="fmtDate(r.created_at)"></td>
+                  <td style="font-size:.8rem;color:var(--ink-2)" x-text="r.reported_by ?? '—'"></td>
+                  <td>
+                    <button
+                      x-show="r.status==='open'"
+                      class="fb-resolve-btn"
+                      :disabled="resolving===r.id"
+                      @click="resolve(r)"
+                      x-text="resolving===r.id?'…':'Marcar resuelto'"
+                    ></button>
+                  </td>
+                </tr>
+
+                <!-- expanded detail row -->
+                <template x-if="expanded===r.id">
+                  <tr class="fb-row-expanded">
+                    <td colspan="9" style="padding:.75rem 1rem 1rem 2.5rem">
+                      <div class="fb-detail-grid">
+
+                        <template x-if="r.type==='bug'">
+                          <div>
+                            <template x-if="r.tried">
+                              <div class="fb-detail-row">
+                                <span class="fb-detail-label">¿Qué intentó?</span>
+                                <span class="fb-detail-value" x-text="r.tried"></span>
+                              </div>
+                            </template>
+                            <template x-if="r.expected">
+                              <div class="fb-detail-row">
+                                <span class="fb-detail-label">¿Qué esperaba?</span>
+                                <span class="fb-detail-value" x-text="r.expected"></span>
+                              </div>
+                            </template>
+                            <template x-if="r.happened">
+                              <div class="fb-detail-row">
+                                <span class="fb-detail-label">¿Qué pasó?</span>
+                                <span class="fb-detail-value" x-text="r.happened"></span>
+                              </div>
+                            </template>
+                            <template x-if="r.impact">
+                              <div class="fb-detail-row">
+                                <span class="fb-detail-label">Impacto</span>
+                                <span class="fb-detail-value" x-text="r.impact"></span>
+                              </div>
+                            </template>
+                          </div>
+                        </template>
+
+                        <template x-if="r.type==='feature_request'">
+                          <div>
+                            <template x-if="r.proposed_change">
+                              <div class="fb-detail-row">
+                                <span class="fb-detail-label">Cambio propuesto</span>
+                                <span class="fb-detail-value" x-text="r.proposed_change"></span>
+                              </div>
+                            </template>
+                            <template x-if="r.justification">
+                              <div class="fb-detail-row">
+                                <span class="fb-detail-label">Justificación</span>
+                                <span class="fb-detail-value" x-text="r.justification"></span>
+                              </div>
+                            </template>
+                          </div>
+                        </template>
+
+                        <template x-if="r.status==='resolved'">
+                          <div class="fb-detail-row">
+                            <span class="fb-detail-label">Resuelto por</span>
+                            <span class="fb-detail-value" x-text="(r.resolved_by??'—') + (r.resolved_at ? ' · ' + fmtDate(r.resolved_at) : '')"></span>
+                          </div>
+                        </template>
+
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+
+              </template>
+            </template>
+
+            <tr x-show="!loading && filtered.length === 0">
+              <td colspan="9" style="text-align:center;color:var(--ink-2);padding:2rem 0;font-size:.875rem">
+                No hay reportes que coincidan con los filtros.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    function feedbackDash() {
+      return {
+        reports: [],
+        loading: true,
+        loadError: '',
+        expanded: null,
+        resolving: null,
+        statusFilter: 'all',
+        typeFilter: 'all',
+        sourceFilter: 'all',
+        search: '',
+
+        get thisWeek() {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - 7);
+          return this.reports.filter((r) => new Date(r.created_at) >= cutoff).length;
+        },
+
+        get filtered() {
+          const q = this.search.toLowerCase();
+          return this.reports.filter((r) => {
+            if (this.statusFilter !== 'all' && r.status !== this.statusFilter) return false;
+            if (this.typeFilter !== 'all' && r.type !== this.typeFilter) return false;
+            if (this.sourceFilter !== 'all' && r.source !== this.sourceFilter) return false;
+            if (!q) return true;
+            const haystack = [r.tried, r.expected, r.happened, r.proposed_change, r.justification, r.screen, r.reported_by]
+              .filter(Boolean).join(' ').toLowerCase();
+            return haystack.includes(q);
+          });
+        },
+
+        async load() {
+          try {
+            const res = await fetch('/api/feedback');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            this.reports = data.reports;
+          } catch (e) {
+            this.loadError = 'Error al cargar los reportes: ' + e.message;
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        toggle(id) {
+          this.expanded = this.expanded === id ? null : id;
+        },
+
+        summary(r) {
+          if (r.type === 'bug') return r.tried ?? r.happened ?? '—';
+          return r.proposed_change ?? '—';
+        },
+
+        fmtDate(iso) {
+          if (!iso) return '—';
+          return new Date(iso).toLocaleString('es-AR', {
+            day: '2-digit', month: '2-digit', year: '2-digit',
+            hour: '2-digit', minute: '2-digit',
+          });
+        },
+
+        async resolve(r) {
+          this.resolving = r.id;
+          try {
+            const res = await fetch('/api/resolve-feedback', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: r.id, source: r.source }),
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            r.status = 'resolved';
+          } catch (e) {
+            alert('Error al resolver el reporte: ' + e.message);
+          } finally {
+            this.resolving = null;
+          }
+        },
+      };
+    }
+  </script>
+
+</body>
+</html>

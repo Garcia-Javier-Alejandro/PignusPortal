@@ -1,0 +1,16 @@
+name = "pignusportal"
+pages_build_output_dir = "."
+compatibility_date = "2026-06-16"
+
+[[d1_databases]]
+binding = "INVENTARIO_DB"
+database_name = "pignus-inventario-db"
+database_id = "a54a3364-529c-48c7-ad4e-f9c5afc5c04e"
+
+[[kv_namespaces]]
+binding = "FACTURACION_KV"
+id = "1ddcfd99d51c4d5ab6cae8b1c8526ddb"
+
+[[kv_namespaces]]
+binding = "INVERSIONES_KV"
+id = "8c1461c1de29450ba42172257fcfdeda"
