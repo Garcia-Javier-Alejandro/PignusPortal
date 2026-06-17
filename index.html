@@ -11,8 +11,137 @@
 </head>
 <body>
   <header class="header">
-    <img src="PignusLabs_Logo.png" alt="Pignus Labs logo" class="header__logo">
+    <div class="header__brand">
+      <img src="PignusLabs_Logo.png" alt="Pignus Labs logo" class="header__logo">
+    </div>
+    <nav class="mod-nav">
+      <a href="#" class="mod-nav__item mod-nav__item--active mod-nav__item--icon" aria-label="Portal" title="Portal">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:block" aria-hidden="true">
+          <path d="M3 11l9-8 9 8"/>
+          <path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>
+        </svg>
+      </a>
+      <a href="https://facturacion.pignuslabs.com.ar/" class="mod-nav__item">Facturación</a>
+      <a href="https://inventario.pignuslabs.com.ar/" class="mod-nav__item">Inventario</a>
+      <a href="https://inversiones.pignuslabs.com.ar/" class="mod-nav__item">Inversiones</a>
+    </nav>
+    <div class="header__end">
+      <button class="iconbtn" id="feedback-open-btn" type="button" title="Reportar un problema" aria-label="Reportar un problema">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 7a3 3 0 0 1 6 0v9a3 3 0 0 1-6 0z"/>
+          <path d="M9 7 6 4M15 7l3-3"/>
+          <path d="M6 11H3M21 11h-3M6 15H3M21 15h-3"/>
+          <line x1="12" y1="7" x2="12" y2="16"/>
+        </svg>
+      </button>
+    </div>
   </header>
+
+  <!-- ── Feedback modal ────────────────────────────────────────────────────── -->
+  <div id="feedback-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-end;justify-content:center">
+    <div style="width:100%;max-width:600px;background:var(--card);border-radius:1rem 1rem 0 0;padding:1.25rem;max-height:90vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <span id="feedback-title" style="font-weight:600;font-size:1rem">Reportar un problema</span>
+        <button id="feedback-close-btn" type="button" class="iconbtn" aria-label="Cerrar">✕</button>
+      </div>
+      <div id="feedback-done" style="display:none;text-align:center;padding:2rem 0;font-size:.875rem;color:var(--ink-2)">Reporte enviado con éxito</div>
+      <div id="feedback-body">
+        <div style="display:flex;gap:.5rem;margin-bottom:1rem">
+          <button id="fb-tab-bug"     type="button" style="flex:1;background:var(--ink);color:#f5f0e8;border:none;border-radius:.5rem;padding:.5rem;font-size:.875rem;font-weight:600;cursor:pointer;font-family:inherit">Problema</button>
+          <button id="fb-tab-feature" type="button" style="flex:1;background:transparent;color:var(--ink-2);border:1.5px solid var(--border);border-radius:.5rem;padding:.5rem;font-size:.875rem;cursor:pointer;font-family:inherit">Mejora</button>
+        </div>
+        <div id="fb-bug-fields">
+          <div style="display:flex;flex-direction:column;gap:.3rem;margin-bottom:.75rem">
+            <label style="font-size:.875rem;font-weight:600">¿Qué intentaste hacer? <span style="color:var(--err)">*</span></label>
+            <textarea id="fb-tried" rows="2" style="width:100%;box-sizing:border-box;padding:.5rem .625rem;border:1px solid var(--border);border-radius:.5rem;font-family:inherit;font-size:.875rem;background:var(--card);color:var(--ink);resize:vertical"></textarea>
+            <span id="fb-tried-err" style="display:none;font-size:.75rem;color:var(--err)">Este campo es requerido</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.3rem;margin-bottom:.75rem">
+            <label style="font-size:.875rem;font-weight:600">¿Qué esperabas que pasara? <span style="color:var(--err)">*</span></label>
+            <textarea id="fb-expected" rows="2" style="width:100%;box-sizing:border-box;padding:.5rem .625rem;border:1px solid var(--border);border-radius:.5rem;font-family:inherit;font-size:.875rem;background:var(--card);color:var(--ink);resize:vertical"></textarea>
+            <span id="fb-expected-err" style="display:none;font-size:.75rem;color:var(--err)">Este campo es requerido</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.3rem;margin-bottom:.75rem">
+            <label style="font-size:.875rem;font-weight:600">¿Qué pasó en realidad? <span style="color:var(--err)">*</span></label>
+            <textarea id="fb-happened" rows="2" style="width:100%;box-sizing:border-box;padding:.5rem .625rem;border:1px solid var(--border);border-radius:.5rem;font-family:inherit;font-size:.875rem;background:var(--card);color:var(--ink);resize:vertical"></textarea>
+            <span id="fb-happened-err" style="display:none;font-size:.75rem;color:var(--err)">Este campo es requerido</span>
+          </div>
+        </div>
+        <div id="fb-feature-fields" style="display:none">
+          <div style="display:flex;flex-direction:column;gap:.3rem;margin-bottom:.75rem">
+            <label style="font-size:.875rem;font-weight:600">¿Qué cambio implementarías? <span style="color:var(--err)">*</span></label>
+            <textarea id="fb-proposed" rows="3" style="width:100%;box-sizing:border-box;padding:.5rem .625rem;border:1px solid var(--border);border-radius:.5rem;font-family:inherit;font-size:.875rem;background:var(--card);color:var(--ink);resize:vertical"></textarea>
+            <span id="fb-proposed-err" style="display:none;font-size:.75rem;color:var(--err)">Este campo es requerido</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.3rem;margin-bottom:.75rem">
+            <label style="font-size:.875rem;font-weight:600">¿Por qué mejoraría la app? <span style="color:var(--err)">*</span></label>
+            <textarea id="fb-justification" rows="3" style="width:100%;box-sizing:border-box;padding:.5rem .625rem;border:1px solid var(--border);border-radius:.5rem;font-family:inherit;font-size:.875rem;background:var(--card);color:var(--ink);resize:vertical"></textarea>
+            <span id="fb-justification-err" style="display:none;font-size:.75rem;color:var(--err)">Este campo es requerido</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:.5rem;margin-top:.5rem">
+          <button id="fb-cancel-btn" type="button" style="flex-shrink:0;padding:.5rem 1rem;background:transparent;border:1.5px solid var(--border);border-radius:.5rem;font-family:inherit;font-size:.875rem;cursor:pointer;color:var(--ink-2)">Cancelar</button>
+          <button id="fb-submit-btn" type="button" style="flex:1;padding:.5rem 1rem;background:var(--ink);color:#f5f0e8;border:none;border-radius:.5rem;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer">Enviar reporte</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let fbMode = 'bug';
+    const $ = (id) => document.getElementById(id);
+    const fbModal = $('feedback-modal');
+
+    const fbOpen  = () => { fbModal.style.display = 'flex'; };
+    const fbClose = () => { fbModal.style.display = 'none'; };
+
+    const fbSetMode = (mode) => {
+      fbMode = mode;
+      if (mode === 'bug') {
+        $('fb-tab-bug').style.cssText    = 'flex:1;background:var(--ink);color:#f5f0e8;border:none;border-radius:.5rem;padding:.5rem;font-size:.875rem;font-weight:600;cursor:pointer;font-family:inherit';
+        $('fb-tab-feature').style.cssText = 'flex:1;background:transparent;color:var(--ink-2);border:1.5px solid var(--border);border-radius:.5rem;padding:.5rem;font-size:.875rem;cursor:pointer;font-family:inherit';
+        $('fb-bug-fields').style.display    = '';
+        $('fb-feature-fields').style.display = 'none';
+        $('feedback-title').textContent = 'Reportar un problema';
+      } else {
+        $('fb-tab-bug').style.cssText    = 'flex:1;background:transparent;color:var(--ink-2);border:1.5px solid var(--border);border-radius:.5rem;padding:.5rem;font-size:.875rem;cursor:pointer;font-family:inherit';
+        $('fb-tab-feature').style.cssText = 'flex:1;background:var(--ink);color:#f5f0e8;border:none;border-radius:.5rem;padding:.5rem;font-size:.875rem;font-weight:600;cursor:pointer;font-family:inherit';
+        $('fb-bug-fields').style.display    = 'none';
+        $('fb-feature-fields').style.display = '';
+        $('feedback-title').textContent = 'Sugerir una mejora';
+      }
+      ['fb-tried-err','fb-expected-err','fb-happened-err','fb-proposed-err','fb-justification-err'].forEach((id) => $(`${id}`).style.display = 'none');
+    };
+
+    $('fb-submit-btn').addEventListener('click', () => {
+      let ok = true;
+      if (fbMode === 'bug') {
+        if (!$('fb-tried').value.trim())    { $('fb-tried-err').style.display    = ''; ok = false; }
+        if (!$('fb-expected').value.trim()) { $('fb-expected-err').style.display = ''; ok = false; }
+        if (!$('fb-happened').value.trim()) { $('fb-happened-err').style.display = ''; ok = false; }
+      } else {
+        if (!$('fb-proposed').value.trim())      { $('fb-proposed-err').style.display     = ''; ok = false; }
+        if (!$('fb-justification').value.trim())  { $('fb-justification-err').style.display = ''; ok = false; }
+      }
+      if (!ok) return;
+      const subject = encodeURIComponent(fbMode === 'bug' ? '[Portal] Reporte de problema' : '[Portal] Sugerencia de mejora');
+      const body = fbMode === 'bug'
+        ? encodeURIComponent(`¿Qué intentaste hacer?\n${$('fb-tried').value}\n\n¿Qué esperabas que pasara?\n${$('fb-expected').value}\n\n¿Qué pasó en realidad?\n${$('fb-happened').value}`)
+        : encodeURIComponent(`¿Qué cambio implementarías?\n${$('fb-proposed').value}\n\n¿Por qué mejoraría la app?\n${$('fb-justification').value}`);
+      window.location.href = `mailto:garcia.javier.alejandro@gmail.com?subject=${subject}&body=${body}`;
+      $('feedback-body').style.display = 'none';
+      $('feedback-done').style.display = '';
+      setTimeout(fbClose, 1500);
+    });
+
+    $('feedback-open-btn').addEventListener('click', fbOpen);
+    $('feedback-close-btn').addEventListener('click', fbClose);
+    $('fb-cancel-btn').addEventListener('click', fbClose);
+    $('fb-tab-bug').addEventListener('click',     () => fbSetMode('bug'));
+    $('fb-tab-feature').addEventListener('click', () => fbSetMode('feature_request'));
+    fbModal.addEventListener('click', (e) => { if (e.target === fbModal) fbClose(); });
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && fbModal.style.display !== 'none') fbClose(); });
+  </script>
 
   <main class="main">
     <div class="app-shell">
