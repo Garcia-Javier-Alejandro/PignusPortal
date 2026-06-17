@@ -37,16 +37,29 @@ async function fromKV(kv, source) {
     }));
 }
 
+async function safeLoad(label, fn) {
+  try {
+    return { label, items: await fn() };
+  } catch (err) {
+    console.error(`[feedback] ${label} failed:`, err.message);
+    return { label, items: [], error: err.message };
+  }
+}
+
 export async function onRequestGet({ env }) {
-  const [d1Items, facItems, invItems] = await Promise.all([
-    fromD1(env.INVENTARIO_DB),
-    fromKV(env.FACTURACION_KV, 'facturacion'),
-    fromKV(env.INVERSIONES_KV, 'inversiones'),
+  const [d1, fac, inv] = await Promise.all([
+    safeLoad('inventario', () => fromD1(env.INVENTARIO_DB)),
+    safeLoad('facturacion', () => fromKV(env.FACTURACION_KV, 'facturacion')),
+    safeLoad('inversiones', () => fromKV(env.INVERSIONES_KV, 'inversiones')),
   ]);
 
-  const reports = [...d1Items, ...facItems, ...invItems].sort(
+  const reports = [...d1.items, ...fac.items, ...inv.items].sort(
     (a, b) => b.created_at.localeCompare(a.created_at)
   );
 
-  return json({ reports });
+  const errors = [d1, fac, inv]
+    .filter((s) => s.error)
+    .map((s) => `${s.label}: ${s.error}`);
+
+  return json({ reports, ...(errors.length ? { errors } : {}) });
 }
