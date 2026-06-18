@@ -264,6 +264,7 @@
                     @click="resolve(r)"
                     x-text="resolving===r.id?'…':'Marcar resuelto'"
                   ></button>
+                  <span x-show="r.status==='resolved'" class="fb-status-chip fb-status-chip--resolved" style="display:none">Resuelto ✓</span>
                 </td>
               </tr>
 
@@ -428,7 +429,8 @@
               body: JSON.stringify({ id: r.id, source: r.source }),
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            r.status = 'resolved';
+            const idx = this.reports.findIndex(x => x.id === r.id);
+            if (idx !== -1) this.reports[idx] = { ...this.reports[idx], status: 'resolved' };
           } catch (e) {
             alert('Error al resolver el reporte: ' + e.message);
           } finally {
