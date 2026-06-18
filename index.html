@@ -92,7 +92,17 @@
     const $ = (id) => document.getElementById(id);
     const fbModal = $('feedback-modal');
 
-    const fbOpen  = () => { fbModal.style.display = 'flex'; };
+    const fbOpen = () => {
+      $('feedback-body').style.display = '';
+      $('feedback-done').style.display = 'none';
+      const btn = $('fb-submit-btn');
+      btn.disabled = false;
+      btn.textContent = 'Enviar reporte';
+      ['fb-tried','fb-expected','fb-happened','fb-proposed','fb-justification'].forEach(id => { $(id).value = ''; });
+      ['fb-tried-err','fb-expected-err','fb-happened-err','fb-proposed-err','fb-justification-err'].forEach(id => { $(id).style.display = 'none'; });
+      fbSetMode('bug');
+      fbModal.style.display = 'flex';
+    };
     const fbClose = () => { fbModal.style.display = 'none'; };
 
     const fbSetMode = (mode) => {
