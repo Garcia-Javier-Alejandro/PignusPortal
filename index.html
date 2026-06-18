@@ -113,7 +113,7 @@
       ['fb-tried-err','fb-expected-err','fb-happened-err','fb-proposed-err','fb-justification-err'].forEach((id) => $(`${id}`).style.display = 'none');
     };
 
-    $('fb-submit-btn').addEventListener('click', () => {
+    $('fb-submit-btn').addEventListener('click', async () => {
       let ok = true;
       if (fbMode === 'bug') {
         if (!$('fb-tried').value.trim())    { $('fb-tried-err').style.display    = ''; ok = false; }
@@ -124,14 +124,23 @@
         if (!$('fb-justification').value.trim())  { $('fb-justification-err').style.display = ''; ok = false; }
       }
       if (!ok) return;
-      const subject = encodeURIComponent(fbMode === 'bug' ? '[Portal] Reporte de problema' : '[Portal] Sugerencia de mejora');
-      const body = fbMode === 'bug'
-        ? encodeURIComponent(`¿Qué intentaste hacer?\n${$('fb-tried').value}\n\n¿Qué esperabas que pasara?\n${$('fb-expected').value}\n\n¿Qué pasó en realidad?\n${$('fb-happened').value}`)
-        : encodeURIComponent(`¿Qué cambio implementarías?\n${$('fb-proposed').value}\n\n¿Por qué mejoraría la app?\n${$('fb-justification').value}`);
-      window.location.href = `mailto:garcia.javier.alejandro@gmail.com?subject=${subject}&body=${body}`;
-      $('feedback-body').style.display = 'none';
-      $('feedback-done').style.display = '';
-      setTimeout(fbClose, 1500);
+      const btn = $('fb-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Enviando…';
+      const payload = fbMode === 'bug'
+        ? { type: 'bug', screen: 'Portal', tried: $('fb-tried').value, expected: $('fb-expected').value, happened: $('fb-happened').value }
+        : { type: 'feature_request', screen: 'Portal', proposed_change: $('fb-proposed').value, justification: $('fb-justification').value };
+      try {
+        const res = await fetch('/api/submit-feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!res.ok) throw new Error(`${res.status}`);
+        $('feedback-body').style.display = 'none';
+        $('feedback-done').style.display = '';
+        setTimeout(fbClose, 1500);
+      } catch {
+        btn.disabled = false;
+        btn.textContent = 'Enviar reporte';
+        alert('Error al enviar. Intentá de nuevo.');
+      }
     });
 
     $('feedback-open-btn').addEventListener('click', fbOpen);
