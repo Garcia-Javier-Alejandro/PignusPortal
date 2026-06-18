@@ -32,11 +32,16 @@ async function sendEmail(apiKey, { to, subject, html }) {
   }
 }
 
-function buildResolvedHtml({ source, type, screen, resolvedBy }) {
+function buildResolvedHtml({ source, type, screen, tried, expected, happened, impact, proposed_change, justification, resolvedBy }) {
   const appLabel = APP_LABELS[source] ?? source;
+  const esc = (s) => s ? String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+  const row = (label, val) => val ? `<tr><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#6b7280;width:150px;vertical-align:top">${label}</td><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#1c1814;white-space:pre-wrap">${esc(val)}</td></tr>` : '';
   const typeLabel = type === 'bug' ? 'Problema' : 'Mejora';
-  const screenRow = screen ? `<tr><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#6b7280;width:120px;">Pantalla</td><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#1c1814;">${screen}</td></tr>` : '';
-  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#f5f0e8;font-family:Georgia,serif;color:#1c1814;"><table style="max-width:600px;margin:32px auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);" cellpadding="0" cellspacing="0" width="100%"><tr><td style="background:#1c1814;padding:24px 32px;"><p style="margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#a89880;">Pignus ${appLabel}</p><h1 style="margin:4px 0 0;font-size:22px;font-weight:500;color:#f5f0e8;">Reporte resuelto</h1></td></tr><tr><td style="padding:24px 32px;"><p style="margin:0 0 16px;font-size:15px;">El reporte que enviaste fue marcado como resuelto.</p><table cellpadding="0" cellspacing="0" width="100%"><tr><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#6b7280;width:120px;">Tipo</td><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#1c1814;">${typeLabel}</td></tr>${screenRow}<tr><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#6b7280;">Resuelto por</td><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#1c1814;">${resolvedBy}</td></tr></table></td></tr><tr><td style="padding:16px 32px;background:#f5f0e8;border-top:1px solid #e8e2d9;"><p style="margin:0;font-size:11px;color:#9ca3af;font-family:sans-serif;">Este correo fue enviado automáticamente al resolverse tu reporte.</p></td></tr></table></body></html>`;
+  const detailRows = type === 'bug'
+    ? row('¿Qué intentaste?', tried) + row('¿Qué esperabas?', expected) + row('¿Qué pasó?', happened) + row('Impacto', impact)
+    : row('Cambio propuesto', proposed_change) + row('Justificación', justification);
+  const tableRows = row('Tipo', typeLabel) + row('Pantalla', screen) + detailRows + row('Resuelto por', resolvedBy);
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#f5f0e8;font-family:Georgia,serif;color:#1c1814;"><table style="max-width:600px;margin:32px auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);" cellpadding="0" cellspacing="0" width="100%"><tr><td style="background:#1c1814;padding:24px 32px;"><p style="margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#a89880;">Pignus ${appLabel}</p><h1 style="margin:4px 0 0;font-size:22px;font-weight:500;color:#f5f0e8;">Reporte resuelto</h1></td></tr><tr><td style="padding:24px 32px;"><p style="margin:0 0 16px;font-size:15px;">El reporte que enviaste fue marcado como resuelto.</p><table cellpadding="0" cellspacing="0" width="100%">${tableRows}</table></td></tr><tr><td style="padding:16px 32px;background:#f5f0e8;border-top:1px solid #e8e2d9;"><p style="margin:0;font-size:11px;color:#9ca3af;font-family:sans-serif;">Este correo fue enviado automáticamente al resolverse tu reporte.</p></td></tr></table></body></html>`;
 }
 
 export async function onRequestPost({ request, env }) {
@@ -58,7 +63,7 @@ export async function onRequestPost({ request, env }) {
 
   if (source === 'inventario') {
     const record = await env.INVENTARIO_DB.prepare(
-      "SELECT reported_by, type, screen FROM feedback_reports WHERE id = ? AND status = 'open'"
+      "SELECT reported_by, type, screen, tried, expected, happened, impact, proposed_change, justification FROM feedback_reports WHERE id = ? AND status = 'open'"
     ).bind(id).first();
     if (!record) return json({ error: 'NOT_FOUND' }, 404);
 
@@ -69,7 +74,7 @@ export async function onRequestPost({ request, env }) {
     await sendEmail(env.RESEND_API_KEY, {
       to: record.reported_by,
       subject: `Tu reporte fue resuelto — Pignus Inventario`,
-      html: buildResolvedHtml({ source, type: record.type, screen: record.screen, resolvedBy }),
+      html: buildResolvedHtml({ source, type: record.type, screen: record.screen, tried: record.tried, expected: record.expected, happened: record.happened, impact: record.impact, proposed_change: record.proposed_change, justification: record.justification, resolvedBy }),
     });
 
     return json({ ok: true });
@@ -87,7 +92,7 @@ export async function onRequestPost({ request, env }) {
   await sendEmail(env.RESEND_API_KEY, {
     to: existing.reported_by,
     subject: `Tu reporte fue resuelto — Pignus ${APP_LABELS[source]}`,
-    html: buildResolvedHtml({ source, type: existing.type, screen: existing.screen, resolvedBy }),
+    html: buildResolvedHtml({ source, type: existing.type, screen: existing.screen, tried: existing.tried, expected: existing.expected, happened: existing.happened, impact: existing.impact, proposed_change: existing.proposed_change, justification: existing.justification, resolvedBy }),
   });
 
   return json({ ok: true });
