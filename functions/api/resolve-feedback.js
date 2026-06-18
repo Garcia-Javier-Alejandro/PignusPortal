@@ -6,6 +6,18 @@ function json(data, status = 200) {
 
 const APP_LABELS = { inventario: 'Inventario', facturacion: 'Facturación', inversiones: 'Inversiones' };
 
+function getReporterEmail(request) {
+  const header = request.headers.get('CF-Access-Authenticated-User-Email');
+  if (header) return header;
+  const jwt = request.headers.get('CF-Access-Jwt-Assertion');
+  if (!jwt) return 'unknown';
+  try {
+    let b64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    b64 += '='.repeat((4 - b64.length % 4) % 4);
+    return JSON.parse(atob(b64)).email ?? 'unknown';
+  } catch { return 'unknown'; }
+}
+
 async function sendEmail(apiKey, { to, subject, html }) {
   if (!apiKey || !to || to === 'unknown' || !to.includes('@')) return;
   try {
@@ -41,7 +53,7 @@ export async function onRequestPost({ request, env }) {
     return json({ error: 'INVALID_SOURCE' }, 400);
   }
 
-  const resolvedBy = request.headers.get('CF-Access-Authenticated-User-Email') ?? 'unknown';
+  const resolvedBy = getReporterEmail(request);
   const resolvedAt = new Date().toISOString();
 
   if (source === 'inventario') {
