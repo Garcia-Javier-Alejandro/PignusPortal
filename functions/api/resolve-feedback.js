@@ -4,6 +4,29 @@ function json(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: CORS });
 }
 
+const APP_LABELS = { inventario: 'Inventario', facturacion: 'Facturación', inversiones: 'Inversiones' };
+
+async function sendEmail(apiKey, { to, subject, html }) {
+  if (!apiKey || !to || to === 'unknown' || !to.includes('@')) return;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: 'Pignus <noreply@pignuslabs.com.ar>', to, subject, html }),
+    });
+    if (!res.ok) console.error(`[email] Resend error ${res.status}`);
+  } catch (err) {
+    console.error('[email] Failed:', err.message);
+  }
+}
+
+function buildResolvedHtml({ source, type, screen, resolvedBy }) {
+  const appLabel = APP_LABELS[source] ?? source;
+  const typeLabel = type === 'bug' ? 'Problema' : 'Mejora';
+  const screenRow = screen ? `<tr><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#6b7280;width:120px;">Pantalla</td><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#1c1814;">${screen}</td></tr>` : '';
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#f5f0e8;font-family:Georgia,serif;color:#1c1814;"><table style="max-width:600px;margin:32px auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);" cellpadding="0" cellspacing="0" width="100%"><tr><td style="background:#1c1814;padding:24px 32px;"><p style="margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#a89880;">Pignus ${appLabel}</p><h1 style="margin:4px 0 0;font-size:22px;font-weight:500;color:#f5f0e8;">Reporte resuelto</h1></td></tr><tr><td style="padding:24px 32px;"><p style="margin:0 0 16px;font-size:15px;">El reporte que enviaste fue marcado como resuelto.</p><table cellpadding="0" cellspacing="0" width="100%"><tr><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#6b7280;width:120px;">Tipo</td><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#1c1814;">${typeLabel}</td></tr>${screenRow}<tr><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#6b7280;">Resuelto por</td><td style="padding:8px 0;border-bottom:1px solid #e8e2d9;font-size:13px;color:#1c1814;">${resolvedBy}</td></tr></table></td></tr><tr><td style="padding:16px 32px;background:#f5f0e8;border-top:1px solid #e8e2d9;"><p style="margin:0;font-size:11px;color:#9ca3af;font-family:sans-serif;">Este correo fue enviado automáticamente al resolverse tu reporte.</p></td></tr></table></body></html>`;
+}
+
 export async function onRequestPost({ request, env }) {
   let body;
   try {
@@ -22,10 +45,21 @@ export async function onRequestPost({ request, env }) {
   const resolvedAt = new Date().toISOString();
 
   if (source === 'inventario') {
-    const info = await env.INVENTARIO_DB.prepare(
+    const record = await env.INVENTARIO_DB.prepare(
+      "SELECT reported_by, type, screen FROM feedback_reports WHERE id = ? AND status = 'open'"
+    ).bind(id).first();
+    if (!record) return json({ error: 'NOT_FOUND' }, 404);
+
+    await env.INVENTARIO_DB.prepare(
       "UPDATE feedback_reports SET status='resolved', resolved_by=?, resolved_at=? WHERE id=?"
     ).bind(resolvedBy, resolvedAt, id).run();
-    if (info.meta.changes === 0) return json({ error: 'NOT_FOUND' }, 404);
+
+    await sendEmail(env.RESEND_API_KEY, {
+      to: record.reported_by,
+      subject: `Tu reporte fue resuelto — Pignus Inventario`,
+      html: buildResolvedHtml({ source, type: record.type, screen: record.screen, resolvedBy }),
+    });
+
     return json({ ok: true });
   }
 
@@ -37,6 +71,12 @@ export async function onRequestPost({ request, env }) {
     `feedback:${id}`,
     JSON.stringify({ ...existing, status: 'resolved', resolved_by: resolvedBy, resolved_at: resolvedAt })
   );
+
+  await sendEmail(env.RESEND_API_KEY, {
+    to: existing.reported_by,
+    subject: `Tu reporte fue resuelto — Pignus ${APP_LABELS[source]}`,
+    html: buildResolvedHtml({ source, type: existing.type, screen: existing.screen, resolvedBy }),
+  });
 
   return json({ ok: true });
 }
